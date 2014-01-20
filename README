@@ -1,3 +1,33 @@
+HELLO WORLD
+
+
+A WORD OF CAUTION,
+NEWBIE WANNABE DEV LEARNING TO BE REAL DEV HERE, SO IF THINGS LOOK A LITTLE CHAOTIC OR OUT OF PLACE,
+JUST BARE WITH ME.. LOL
+
+THIS IS MY SOURCE FOR THE SONY XPERIA M KERNEL, SPECIFICALLY 15.1.C.2.9 SOURCES DOWNLOAD FROM 
+http://developer.sonymobile.com/downloads/opensource/
+
+I THINK IF YOU HAVE REACHED THIS YOU WANTS OR IS LOOKING FOR THE SOURCE FOR XPERIA M, WANNA COMPILE 
+YOUR OWN KERNEL TOO, OR YOUR FROM XDA COMING HERE TO CHECK IF I ABIDE WITH THE GPL STUFF :D
+----------------------------------------------------------------------------------------------------------------------------------
+WANNA BUILD IT???
+
+TOOK ME A WHILE TO GET A BOOTING BUILD BUT HERES WHAT I DID
+
+export ARCH=arm
+export CROSS_COMPILE=/path/to/toolchain (i used doomlords 4.6.2 toolchain)
+
+make clean
+make mrproper
+
+make proj_S3A_user_defconfig
+make -j3 (j3 cause i only have a dual core laptop)
+
+SOME OTHER STUFF I DISCOVERED ALONG THE WAY
+
+make CFLAGS_MODULE=-fno-pic modules (compiles modules only, or atleast that what happened when i ran the command :p)
+----------------------------------------------------------------------------------------------------------------------------------
 Linux kernel release 3.x <http://kernel.org/>
 
 These are the release notes for Linux version 3.  Read them carefully,
