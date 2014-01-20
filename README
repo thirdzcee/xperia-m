@@ -15,12 +15,11 @@ WANNA BUILD IT???
 
 TOOK ME A WHILE TO GET A BOOTING BUILD BUT HERES WHAT I DID
 
+cd kernel
 export ARCH=arm
 export CROSS_COMPILE=/path/to/toolchain (i used doomlords 4.6.2 toolchain)
-
 make clean
 make mrproper
-
 make proj_S3A_user_defconfig
 make -j3 (j3 cause i only have a dual core laptop)
 
