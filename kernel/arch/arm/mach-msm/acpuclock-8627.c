@@ -107,6 +107,9 @@ static struct l2_level l2_freq_tbl[] __initdata = {
 	[10] = { {  918000, HFPLL, 1, 0x22 }, LVL_HIGH, 1150000, 4 },
 	[11] = { {  972000, HFPLL, 1, 0x24 }, LVL_HIGH, 1150000, 4 },
 	[12] = { { 1026000, HFPLL, 1, 0x26 }, LVL_HIGH, 1150000, 4 },
+	[13] = { { 1080000, HFPLL, 1, 0x28 }, LVL_HIGH, 1150000, 4 },
+	[14] = { { 1134000, HFPLL, 1, 0x2A }, LVL_HIGH, 1150000, 4 },
+	{ }
 };
 
 /* TODO: Update core voltages when data is available. */
@@ -123,7 +126,11 @@ static struct acpu_level acpu_freq_tbl[] __initdata = {
 	{ 1, {   864000, HFPLL, 1, 0x20 }, L2(11), 1062500 },
 	{ 1, {   918000, HFPLL, 1, 0x22 }, L2(11), 1087500 },
 	{ 1, {   972000, HFPLL, 1, 0x24 }, L2(11), 1100000 },
-	{ 1, {  1026000, HFPLL, 1, 0x26 }, L2(11),  1125000 },
+	{ 1, {  1026000, HFPLL, 1, 0x26 }, L2(11), 1100000 },
+    { 1, {  1080000, HFPLL, 1, 0x28 }, L2(14), 1150000 },
+    { 1, {  1134000, HFPLL, 1, 0x2A }, L2(14), 1150000 },
+    { 1, {  1188000, HFPLL, 1, 0x2C }, L2(14), 1175000 },
+	{ 1, {  1242000, HFPLL, 1, 0x2E }, L2(14), 1175000 },
 	{ 0, { 0 } }
 };
 
