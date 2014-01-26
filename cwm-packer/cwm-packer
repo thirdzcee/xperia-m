@@ -1,0 +1,94 @@
+#!/bin/sh
+#
+# CWM recovery packer - Sony Xperia M boot image tools
+# Author: alvinhochun
+
+usage () {
+	echo "Usage:"
+	echo
+	echo "Place boot.gz and recovery.gz under workdir/combinedroot/boot"
+	echo "These images has to be gziped cpio images."
+	echo "Place the kernel zimage as workdir/kernel"
+	echo "Write the kernel command line to workdir/cmdline"
+	echo
+}
+
+echo "CWM recovery packer - Sony Xperia M boot image tools"
+echo "Author: alvinhochun"
+echo "On xda-developers:"
+echo "http://forum.xda-developers.com/member.php?u=3015000"
+echo
+
+usage
+
+WORKDIR=`readlink -f ./workdir/combinedroot`
+KERNEL=`readlink -f ./workdir/kernel`
+KERNEL_CMDLINE_FILE=`readlink -f ./workdir/cmdline`
+MKBOOTIMG=`readlink -f ./bin/mkbootimg`
+RAMDISK_OUT=`readlink -f ./combined-ramdisk.img`
+OUT=`readlink -f ./combined-boot.img`
+
+if [ ! -d "$WORKDIR" ]; then
+	echo "FAIL: Directory \"$WORKDIR\" does not exist!"
+	return 1
+fi
+
+if [ ! -f "$WORKDIR/init" ]; then
+	echo "Fail: \"init\" is gone!"
+	return 1
+fi
+
+if [ ! -f "$WORKDIR/boot/boot.gz" ]; then
+	echo "Fail: Boot ramdisk does not exist!"
+	return 1
+fi
+
+if [ ! -f "$WORKDIR/boot/recovery.gz" ]; then
+	echo "Fail: Recovery ramdisk does not exist!"
+	return 1
+fi
+
+if [ ! -f "$WORKDIR/sbin/busybox" ]; then
+	echo "Fail: Busybox is gone!"
+	return 1
+fi
+
+echo "Creating ramdisk \"$RAMDISK_OUT\"..."
+echo
+
+(
+	cd "$WORKDIR"
+	find ./ | cpio -H newc -o | gzip > "$RAMDISK_OUT"
+)
+
+echo
+
+if [ ! -f "$RAMDISK_OUT" ]; then
+	echo "Fail: Ramdisk not created!"
+	return 1
+fi
+
+if [ ! -x "$MKBOOTIMG" ]; then
+	echo "Fail: \"$MKBOOTIMG\" does not exist or not executable."
+	return 1
+fi
+
+MKBOOTIMG_ARGS=""
+MKBOOTIMG_ARGS="$MKBOOTIMG_ARGS --kernel \"$KERNEL\""
+MKBOOTIMG_ARGS="$MKBOOTIMG_ARGS --ramdisk \"$RAMDISK_OUT\""
+MKBOOTIMG_ARGS="$MKBOOTIMG_ARGS --base 0x80200000"
+MKBOOTIMG_ARGS="$MKBOOTIMG_ARGS --kernel_offset 0x00008000"
+MKBOOTIMG_ARGS="$MKBOOTIMG_ARGS --ramdisk_offset 0x02000000"
+MKBOOTIMG_ARGS="$MKBOOTIMG_ARGS --pagesize 4096"
+if [ -f "$KERNEL_CMDLINE_FILE" ]; then
+	MKBOOTIMG_ARGS="$MKBOOTIMG_ARGS --cmdline \"`cat "$KERNEL_CMDLINE_FILE"`\""
+fi
+MKBOOTIMG_ARGS="$MKBOOTIMG_ARGS -o \"$OUT\""
+
+echo "Packing boot.img to \"$OUT\"..."
+echo
+
+eval $MKBOOTIMG $MKBOOTIMG_ARGS
+
+return $?
+
