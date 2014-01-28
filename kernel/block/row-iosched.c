@@ -1,7 +1,7 @@
 /*
  * ROW (Read Over Write) I/O scheduler.
  *
- * Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+ * Copyright (c) 2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -118,10 +118,11 @@ struct row_queue {
  *
  */
 struct idling_data {
-	unsigned long		idle_time;
-	unsigned long		freq;
+	unsigned long			idle_time;
+	unsigned long			freq;
 
-	struct delayed_work	idle_work;
+	struct workqueue_struct	*idle_workqueue;
+	struct delayed_work		idle_work;
 };
 
 /**
@@ -386,16 +387,24 @@ static int row_dispatch_requests(struct request_queue *q, int force)
 	if (list_empty(&rd->row_queues[currq].rqueue.fifo)) {
 		/* check idling */
 		if (delayed_work_pending(&rd->read_idle.idle_work)) {
-			row_log_rowq(rd, currq,
-				     "Delayed work pending. Exiting");
-			goto done;
+			if (force) {
+				(void)cancel_delayed_work(
+				&rd->read_idle.idle_work);
+				row_log_rowq(rd, currq,
+					"Canceled delayed work - forced dispatch");
+			} else {
+				row_log_rowq(rd, currq,
+						 "Delayed work pending. Exiting");
+				goto done;
+			}
 		}
 
-		if (queue_idling_enabled[currq] &&
+		if (!force && queue_idling_enabled[currq] &&
 		    rd->row_queues[currq].rqueue.idle_data.begin_idling) {
-			if (!kblockd_schedule_delayed_work(rd->dispatch_queue,
-			     &rd->read_idle.idle_work, jiffies +
-			     msecs_to_jiffies(rd->read_idle.idle_time))) {
+			if (!queue_delayed_work(rd->read_idle.idle_workqueue,
+			    &rd->read_idle.idle_work,
+			    jiffies +
+			    msecs_to_jiffies(rd->read_idle.idle_time))) {
 				row_log_rowq(rd, currq,
 					     "Work already on queue!");
 				pr_err("ROW_BUG: Work already on queue!");
@@ -453,6 +462,10 @@ static void *row_init_queue(struct request_queue *q)
 	 */
 	rdata->read_idle.idle_time = ROW_IDLE_TIME;
 	rdata->read_idle.freq = ROW_READ_FREQ;
+	rdata->read_idle.idle_workqueue = alloc_workqueue("row_idle_work",
+					    WQ_MEM_RECLAIM | WQ_HIGHPRI, 0);
+	if (!rdata->read_idle.idle_workqueue)
+		panic("Failed to create idle workqueue\n");
 	INIT_DELAYED_WORK(&rdata->read_idle.idle_work, kick_queue);
 
 	rdata->curr_queue = ROWQ_PRIO_HIGH_READ;
@@ -597,29 +610,27 @@ static ssize_t __FUNC(struct elevator_queue *e,				\
 	return ret;							\
 }
 STORE_FUNCTION(row_hp_read_quantum_store,
-		&rowd->row_queues[ROWQ_PRIO_HIGH_READ].disp_quantum, 0,
-		INT_MAX, 0);
+&rowd->row_queues[ROWQ_PRIO_HIGH_READ].disp_quantum, 1, INT_MAX, 0);
 STORE_FUNCTION(row_rp_read_quantum_store,
-		&rowd->row_queues[ROWQ_PRIO_REG_READ].disp_quantum, 0,
-		INT_MAX, 0);
+			&rowd->row_queues[ROWQ_PRIO_REG_READ].disp_quantum,
+			1, INT_MAX, 0);
 STORE_FUNCTION(row_hp_swrite_quantum_store,
-		&rowd->row_queues[ROWQ_PRIO_HIGH_SWRITE].disp_quantum, 0,
-		INT_MAX, 0);
+			&rowd->row_queues[ROWQ_PRIO_HIGH_SWRITE].disp_quantum,
+			1, INT_MAX, 0);
 STORE_FUNCTION(row_rp_swrite_quantum_store,
-		&rowd->row_queues[ROWQ_PRIO_REG_SWRITE].disp_quantum, 0,
-		INT_MAX, 0);
+			&rowd->row_queues[ROWQ_PRIO_REG_SWRITE].disp_quantum,
+			1, INT_MAX, 0);
 STORE_FUNCTION(row_rp_write_quantum_store,
-		&rowd->row_queues[ROWQ_PRIO_REG_WRITE].disp_quantum, 0,
-		INT_MAX, 0);
+			&rowd->row_queues[ROWQ_PRIO_REG_WRITE].disp_quantum,
+			1, INT_MAX, 0);
 STORE_FUNCTION(row_lp_read_quantum_store,
-		&rowd->row_queues[ROWQ_PRIO_LOW_READ].disp_quantum, 0,
-		INT_MAX, 0);
+			&rowd->row_queues[ROWQ_PRIO_LOW_READ].disp_quantum,
+			1, INT_MAX, 0);
 STORE_FUNCTION(row_lp_swrite_quantum_store,
-		&rowd->row_queues[ROWQ_PRIO_LOW_SWRITE].disp_quantum, 0,
-		INT_MAX, 1);
+			&rowd->row_queues[ROWQ_PRIO_LOW_SWRITE].disp_quantum,
+			1, INT_MAX, 1);
 STORE_FUNCTION(row_read_idle_store, &rowd->read_idle.idle_time, 1, INT_MAX, 1);
-STORE_FUNCTION(row_read_idle_freq_store, &rowd->read_idle.freq,
-				1, INT_MAX, 1);
+STORE_FUNCTION(row_read_idle_freq_store, &rowd->read_idle.freq, 1, INT_MAX, 1);
 
 #undef STORE_FUNCTION
 
