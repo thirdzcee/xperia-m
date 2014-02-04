@@ -422,9 +422,7 @@ show_one(down_differential, down_differential);
 show_one(freq_step, freq_step);
 show_one(cpu_up_rate, cpu_up_rate);
 show_one(cpu_down_rate, cpu_down_rate);
-#ifdef CONFIG_CPU_EXYNOS4210
 show_one(up_nr_cpus, up_nr_cpus);
-#endif
 show_one(max_cpu_lock, max_cpu_lock);
 show_one(dvfs_debug, dvfs_debug);
 show_one(up_threshold_at_min_freq, up_threshold_at_min_freq);
@@ -652,7 +650,7 @@ dbs_tuners_ins.cpu_down_rate = min(input, MAX_HOTPLUG_RATE);
 return count;
 }
 
-#ifdef CONFIG_CPU_EXYNOS4210
+//#ifdef CONFIG_CPU_EXYNOS4210
 static ssize_t store_up_nr_cpus(struct kobject *a, struct attribute *b,
 const char *buf, size_t count)
 {
@@ -664,7 +662,7 @@ return -EINVAL;
 dbs_tuners_ins.up_nr_cpus = min(input, num_possible_cpus());
 return count;
 }
-#endif
+//#endif
 
 static ssize_t store_max_cpu_lock(struct kobject *a, struct attribute *b,
 const char *buf, size_t count)
@@ -759,9 +757,9 @@ define_one_global_rw(down_differential);
 define_one_global_rw(freq_step);
 define_one_global_rw(cpu_up_rate);
 define_one_global_rw(cpu_down_rate);
-#ifdef CONFIG_CPU_EXYNOS4210
+//#ifdef CONFIG_CPU_EXYNOS4210
 define_one_global_rw(up_nr_cpus);
-#endif
+//#endif
 define_one_global_rw(max_cpu_lock);
 define_one_global_rw(hotplug_lock);
 define_one_global_rw(dvfs_debug);
@@ -779,9 +777,9 @@ static struct attribute *dbs_attributes[] = {
 &freq_step.attr,
 &cpu_up_rate.attr,
 &cpu_down_rate.attr,
-#ifdef CONFIG_CPU_EXYNOS4210
+//#ifdef CONFIG_CPU_EXYNOS4210
 &up_nr_cpus.attr,
-#endif
+//#endif
 /* priority: hotplug_lock > max_cpu_lock */
 &max_cpu_lock.attr,
 &hotplug_lock.attr,
